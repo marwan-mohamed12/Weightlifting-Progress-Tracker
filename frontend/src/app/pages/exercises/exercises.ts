@@ -1,0 +1,124 @@
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import { Api } from '../../core/api';
+import { Toast } from '../../core/toast';
+import { messageFrom } from '../../core/format';
+import { Exercise } from '../../core/models';
+import { ConfirmDialog } from '../../shared/confirm';
+
+@Component({
+  selector: 'app-exercises',
+  imports: [ReactiveFormsModule, ConfirmDialog, RouterLink],
+  templateUrl: './exercises.html',
+})
+export class ExercisesPage implements OnInit {
+  private readonly api = inject(Api);
+  private readonly fb = inject(FormBuilder);
+  private readonly toast = inject(Toast);
+
+  readonly exercises = signal<Exercise[]>([]);
+  readonly query = signal('');
+  readonly loading = signal(true);
+  readonly error = signal<string | null>(null);
+  readonly editingId = signal<number | null>(null);
+  readonly showForm = signal(false);
+  readonly pendingDelete = signal<Exercise | null>(null);
+
+  readonly groups = ['CHEST', 'BACK', 'SHOULDERS', 'LEGS', 'ARMS', 'CORE', 'OTHER'];
+
+  readonly form = this.fb.nonNullable.group({
+    name: ['', [Validators.required, Validators.maxLength(120)]],
+    notes: ['', Validators.maxLength(1000)],
+    muscleGroup: ['OTHER'],
+  });
+
+  readonly filtered = computed(() => {
+    const q = this.query().trim().toLowerCase();
+    if (!q) {
+      return this.exercises();
+    }
+    return this.exercises().filter((exercise) => exercise.name.toLowerCase().includes(q));
+  });
+
+  ngOnInit() {
+    this.reload();
+  }
+
+  reload() {
+    this.loading.set(true);
+    this.api.listExercises().subscribe({
+      next: (rows) => {
+        this.exercises.set(rows);
+        this.loading.set(false);
+      },
+      error: (err) => {
+        this.error.set(messageFrom(err));
+        this.loading.set(false);
+      },
+    });
+  }
+
+  startCreate() {
+    this.editingId.set(null);
+    this.form.reset({ name: '', notes: '', muscleGroup: 'OTHER' });
+    this.showForm.set(true);
+  }
+
+  startEdit(exercise: Exercise) {
+    this.editingId.set(exercise.id);
+    this.form.reset({ name: exercise.name, notes: exercise.notes ?? '', muscleGroup: exercise.muscleGroup ?? 'OTHER' });
+    this.showForm.set(true);
+  }
+
+  cancel() {
+    this.showForm.set(false);
+    this.editingId.set(null);
+  }
+
+  save() {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    const body = {
+      name: this.form.controls.name.value.trim(),
+      notes: this.form.controls.notes.value.trim() || null,
+      muscleGroup: this.form.controls.muscleGroup.value,
+    };
+    const id = this.editingId();
+    const request = id ? this.api.updateExercise(id, body) : this.api.createExercise(body);
+    request.subscribe({
+      next: () => {
+        this.showForm.set(false);
+        this.editingId.set(null);
+        this.toast.show(id ? 'Exercise updated' : 'Exercise saved');
+        this.reload();
+      },
+      error: (err) => this.error.set(messageFrom(err)),
+    });
+  }
+
+  askDelete(exercise: Exercise) {
+    this.pendingDelete.set(exercise);
+  }
+
+  cancelDelete() {
+    this.pendingDelete.set(null);
+  }
+
+  confirmDelete() {
+    const exercise = this.pendingDelete();
+    this.pendingDelete.set(null);
+    if (!exercise) {
+      return;
+    }
+    this.api.deleteExercise(exercise.id).subscribe({
+      next: () => {
+        this.toast.show('Exercise deleted');
+        this.reload();
+      },
+      error: (err) => this.error.set(messageFrom(err)),
+    });
+  }
+}
