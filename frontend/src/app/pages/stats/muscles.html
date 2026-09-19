@@ -1,0 +1,44 @@
+<section class="page">
+  <header class="mb-4">
+    <p class="m-0 text-sm font-medium text-mute">Progress</p>
+    <h1 class="page-title mt-1">Muscles</h1>
+  </header>
+
+  <app-stats-nav />
+
+  @if (error()) {
+    <p class="banner-bad mb-4" role="alert">{{ error() }}</p>
+  }
+
+  @if (overview(); as o) {
+    <section class="card mb-4">
+      <h2 class="label-caps mb-3">Volume by muscle</h2>
+      @if (o.volumeByMuscle.length === 0) {
+        <p class="m-0 text-sm text-mute">Set a muscle group on each exercise to fill this.</p>
+      }
+      @for (row of o.volumeByMuscle; track row.name) {
+        <div class="mb-3">
+          <div class="mb-1 flex justify-between text-sm">
+            <span class="font-semibold">{{ row.name }}</span>
+            <span class="tabular-nums">{{ formatKg(row.volume) }}</span>
+          </div>
+          <div class="h-2 overflow-hidden rounded-full bg-iron">
+            <div class="h-full rounded-full bg-plate" [style.width]="barWidth(row.volume, o.volumeByMuscle[0].volume)"></div>
+          </div>
+        </div>
+      }
+    </section>
+
+    <section class="card">
+      <h2 class="label-caps mb-3">How often you train each lift</h2>
+      <ul class="m-0 grid list-none gap-2 p-0">
+        @for (row of o.exerciseFrequency; track row.exerciseId) {
+          <li class="flex min-h-12 items-center justify-between rounded-2xl bg-iron px-4">
+            <span class="font-medium">{{ row.name }}</span>
+            <span class="text-mute">{{ row.sessions }}</span>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+</section>
