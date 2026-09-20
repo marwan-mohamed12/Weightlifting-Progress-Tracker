@@ -4,9 +4,14 @@ frontend/dist/
 frontend/.angular/
 frontend/out-tsc/
 frontend/tmp/
+frontend-local/dist/
+frontend-local/.angular/
+frontend-local/out-tsc/
+frontend-local/tmp/
 
 # Dependencies
 frontend/node_modules/
+frontend-local/node_modules/
 
 # SQLite runtime data
 backend/data/
@@ -37,4 +42,6 @@ desktop.ini
 # Test / coverage
 frontend/coverage/
 frontend/apk/
+frontend-local/coverage/
+frontend-local/apk/
 backend/*.log

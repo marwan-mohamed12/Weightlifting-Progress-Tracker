@@ -37,6 +37,18 @@ npm start
 
 Open [http://localhost:4200](http://localhost:4200). The Angular dev server proxies `/api` to `http://localhost:8080`.
 
+## Run without a backend
+
+`frontend-local/` is the same app with data in the browser. No Java, no SQLite, no `/api`.
+
+```powershell
+cd frontend-local
+npm install
+npm start
+```
+
+Open [http://localhost:4300](http://localhost:4300). Export a JSON backup from Settings if you want to move data later.
+
 Production API profile:
 
 ```powershell

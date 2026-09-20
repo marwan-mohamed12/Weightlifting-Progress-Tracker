@@ -1,0 +1,245 @@
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Outfit", "Segoe UI", sans-serif;
+  --font-display: "Outfit", "Segoe UI", sans-serif;
+  --color-iron: #141416;
+  --color-surface: #1c1c20;
+  --color-raised: #25252b;
+  --color-ink: #f6f6f7;
+  --color-mute: #9a9aa3;
+  --color-line: #2e2e36;
+  --color-plate: #c8f247;
+  --color-lime: #c8f247;
+  --color-on-plate: #141416;
+  --color-brass: #c8f247;
+  --color-lilac: #c9b6ff;
+  --color-blush: #f3b4d0;
+  --color-dock: #ffffff;
+  --color-good: #c8f247;
+  --color-bad: #ff6b7a;
+  --color-muscle-chest: #ff9f6b;
+  --color-muscle-back: #6fd3c8;
+  --color-muscle-shoulders: #f0c75e;
+  --color-muscle-legs: #c8f247;
+  --color-muscle-arms: #ff7a90;
+  --color-muscle-core: #7eb8ff;
+  --color-muscle-other: #9a9aa3;
+}
+
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@utility pb-dock {
+  padding-bottom: calc(6.25rem + env(safe-area-inset-bottom));
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  html[dir="rtl"] {
+    --font-sans: "Tajawal", "Segoe UI", sans-serif;
+    --font-display: "Tajawal", "Segoe UI", sans-serif;
+  }
+
+  html[dir="rtl"] .page-title,
+  html[dir="rtl"] .label-caps {
+    letter-spacing: 0;
+  }
+
+  html,
+  body {
+    @apply m-0 min-h-dvh bg-iron font-sans text-base leading-normal text-ink antialiased;
+    touch-action: manipulation;
+  }
+
+  button,
+  a,
+  [role="button"] {
+    @apply cursor-pointer;
+  }
+
+  button:disabled {
+    @apply cursor-not-allowed;
+  }
+
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    appearance: none;
+    margin: 0;
+  }
+
+  input[type="number"] {
+    appearance: textfield;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  .page {
+    @apply mx-auto w-full min-w-0 max-w-[720px];
+  }
+
+  .page-title {
+    @apply m-0 font-display text-[1.85rem] font-bold leading-none tracking-tight text-ink;
+  }
+
+  .label-caps {
+    @apply text-[11px] font-semibold uppercase tracking-[0.12em] text-mute;
+  }
+
+  .field {
+    @apply grid gap-1.5;
+  }
+
+  .control {
+    @apply min-h-12 w-full rounded-[1.25rem] border-0 bg-raised px-3.5 text-base tracking-normal text-ink outline-none transition-[box-shadow] duration-150;
+  }
+
+  .control:focus-visible,
+  .btn:focus-visible,
+  .btn-ghost:focus-visible,
+  .btn-danger:focus-visible,
+  .icon-btn:focus-visible,
+  .nav-link:focus-visible,
+  .chip:focus-visible {
+    @apply ring-2 ring-plate ring-offset-2 ring-offset-iron;
+  }
+
+  .btn {
+    @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-plate px-5 text-[0.95rem] font-semibold text-on-plate transition-[transform,filter] duration-150;
+  }
+
+  .btn:hover {
+    filter: brightness(1.05);
+  }
+
+  .btn:active {
+    transform: scale(0.97);
+  }
+
+  .btn:disabled {
+    @apply opacity-50;
+  }
+
+  .btn-ghost {
+    @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-raised px-5 text-[0.95rem] font-semibold text-ink transition-[background,transform] duration-150;
+  }
+
+  .btn-ghost:active {
+    transform: scale(0.97);
+  }
+
+  .btn-danger {
+    @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-bad/15 px-5 text-[0.95rem] font-semibold text-bad transition-[transform] duration-150;
+  }
+
+  .icon-btn {
+    @apply grid size-12 shrink-0 place-items-center rounded-full text-mute transition-colors duration-150;
+  }
+
+  .icon-btn:hover {
+    @apply bg-raised text-ink;
+  }
+
+  .icon-btn.text-bad:hover {
+    @apply bg-bad/15 text-bad;
+  }
+
+  .icon-btn:disabled {
+    @apply opacity-35;
+  }
+
+  .card {
+    @apply rounded-[1.75rem] bg-surface p-4;
+  }
+
+  .banner-bad {
+    @apply rounded-[1.5rem] bg-bad/15 px-4 py-3 text-sm text-ink;
+  }
+
+  .empty {
+    @apply grid justify-items-center gap-3 px-2 py-16 text-center;
+  }
+
+  .chip {
+    @apply inline-flex min-h-10 shrink-0 items-center rounded-full bg-raised px-4 text-sm font-medium text-mute transition-colors duration-150;
+  }
+
+  .chip.is-on {
+    @apply bg-plate text-on-plate;
+  }
+
+  .nav-link {
+    @apply flex items-center justify-center text-mute transition-colors duration-150;
+  }
+
+  .nav-link.is-on {
+    @apply text-on-plate;
+  }
+
+  .dock-item {
+    @apply grid size-12 place-items-center rounded-full text-[#8d8d96];
+  }
+
+  .dock-item.is-on {
+    @apply bg-plate text-on-plate;
+  }
+
+  .muscle-chip {
+    @apply inline-flex w-fit rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em];
+  }
+
+  .muscle-chest {
+    background: color-mix(in srgb, var(--color-muscle-chest) 16%, transparent);
+    color: var(--color-muscle-chest);
+  }
+
+  .muscle-back {
+    background: color-mix(in srgb, var(--color-muscle-back) 16%, transparent);
+    color: var(--color-muscle-back);
+  }
+
+  .muscle-shoulders {
+    background: color-mix(in srgb, var(--color-muscle-shoulders) 16%, transparent);
+    color: var(--color-muscle-shoulders);
+  }
+
+  .muscle-legs {
+    background: color-mix(in srgb, var(--color-muscle-legs) 16%, transparent);
+    color: var(--color-muscle-legs);
+  }
+
+  .muscle-arms {
+    background: color-mix(in srgb, var(--color-muscle-arms) 16%, transparent);
+    color: var(--color-muscle-arms);
+  }
+
+  .muscle-core {
+    background: color-mix(in srgb, var(--color-muscle-core) 16%, transparent);
+    color: var(--color-muscle-core);
+  }
+
+  .muscle-other {
+    background: color-mix(in srgb, var(--color-muscle-other) 16%, transparent);
+    color: var(--color-muscle-other);
+  }
+}

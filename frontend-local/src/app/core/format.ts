@@ -1,0 +1,79 @@
+import { locale, t } from './i18n';
+
+export function formatKg(value: number | string | null | undefined): string {
+  if (value === null || value === undefined || value === '') {
+    return '0';
+  }
+  const n = typeof value === 'number' ? value : Number(value);
+  if (Number.isNaN(n)) {
+    return '0';
+  }
+  return Number.isInteger(n) ? String(n) : String(n);
+}
+
+export function plateBand(weightKg: number): 'green' | 'yellow' | 'blue' | 'red' {
+  if (weightKg < 10) {
+    return 'green';
+  }
+  if (weightKg < 15) {
+    return 'yellow';
+  }
+  if (weightKg < 20) {
+    return 'blue';
+  }
+  return 'red';
+}
+
+export function formatDay(isoDate: string): string {
+  const date = new Date(isoDate + 'T00:00:00');
+  const tag = locale() === 'ar' ? 'ar-EG' : 'en-GB';
+  return new Intl.DateTimeFormat(tag, {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    numberingSystem: 'latn',
+  }).format(date);
+}
+
+export function formatMonth(date = new Date()): string {
+  const tag = locale() === 'ar' ? 'ar-EG' : 'en-GB';
+  return new Intl.DateTimeFormat(tag, {
+    month: 'long',
+    year: 'numeric',
+    numberingSystem: 'latn',
+  }).format(date);
+}
+
+export function todayIso(): string {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${now.getFullYear()}-${month}-${day}`;
+}
+
+export function trendCopy(direction: string): string {
+  switch (direction) {
+    case 'up':
+      return t('trend.up');
+    case 'down':
+      return t('trend.down');
+    case 'stable':
+      return t('trend.stable');
+    default:
+      return t('trend.wait');
+  }
+}
+
+export function messageFrom(error: unknown): string {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+  return t('common.genericError');
+}
+
+export function prLabel(type: string): string {
+  const key = `pr.${type}`;
+  const label = t(key);
+  return label === key ? type : label;
+}

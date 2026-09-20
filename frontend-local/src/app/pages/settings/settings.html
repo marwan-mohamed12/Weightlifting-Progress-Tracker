@@ -1,0 +1,73 @@
+<section class="page">
+  <header class="mb-6">
+    <a routerLink="/" class="text-sm font-semibold text-mute">{{ 'nav.back' | t }}</a>
+    <h1 class="page-title mt-2">{{ 'settings.title' | t }}</h1>
+    <p class="mt-2 text-sm text-mute">{{ 'settings.blurb' | t }}</p>
+  </header>
+
+  @if (error()) {
+    <p class="banner-bad mb-4" role="alert">{{ error() }}</p>
+  }
+  @if (info()) {
+    <p class="mb-4 rounded-[1.5rem] bg-plate/20 px-4 py-3 text-sm">{{ info() }}</p>
+  }
+
+  <section class="card mb-4 grid gap-3">
+    <h2 class="m-0 text-lg font-bold">{{ 'settings.language' | t }}</h2>
+    <div class="flex flex-wrap gap-2">
+      <button type="button" class="chip min-h-11" [class.is-on]="i18n.locale() === 'ar'" (click)="setLanguage('ar')">
+        {{ 'settings.arabic' | t }}
+      </button>
+      <button type="button" class="chip min-h-11" [class.is-on]="i18n.locale() === 'en'" (click)="setLanguage('en')">
+        {{ 'settings.english' | t }}
+      </button>
+    </div>
+  </section>
+
+  <section class="card mb-4 grid gap-3">
+    <h2 class="m-0 text-lg font-bold">{{ 'settings.restTimer' | t }}</h2>
+    <p class="m-0 text-sm text-mute">{{ 'settings.restTimerHint' | t }}</p>
+    <div class="flex flex-wrap gap-2">
+      @for (choice of restChoices; track choice) {
+        <button type="button" class="chip min-h-11" [class.is-on]="restSeconds() === choice" (click)="setRest(choice)">
+          {{ restLabel(choice) }}
+        </button>
+      }
+    </div>
+  </section>
+
+  <label class="card mb-4 flex min-h-16 items-center justify-between gap-4">
+    <span>
+      <span class="block font-semibold">{{ 'settings.prAlerts' | t }}</span>
+      <span class="block text-sm text-mute">{{ 'settings.prAlertsHint' | t }}</span>
+    </span>
+    <input
+      class="size-5 accent-plate"
+      type="checkbox"
+      [checked]="notify()"
+      [disabled]="loading()"
+      (change)="toggle($any($event.target).checked)"
+    />
+  </label>
+
+  <section class="card mb-4 grid gap-3">
+    <h2 class="m-0 text-lg font-bold">{{ 'settings.data' | t }}</h2>
+    <p class="m-0 text-sm text-mute">{{ 'settings.dataHint' | t }}</p>
+    <div class="flex flex-wrap gap-2">
+      <button type="button" class="btn" (click)="exportJson()">{{ 'settings.exportJson' | t }}</button>
+      <button type="button" class="btn-ghost" (click)="exportCsv()">{{ 'settings.exportCsv' | t }}</button>
+    </div>
+    <label class="field">
+      <span class="label-caps">{{ 'settings.importJson' | t }}</span>
+      <input class="control" type="file" accept="application/json,.json" (change)="onJsonFile($event, false)" />
+    </label>
+    <label class="field">
+      <span class="label-caps">{{ 'settings.restore' | t }}</span>
+      <input class="control" type="file" accept="application/json,.json" (change)="onJsonFile($event, true)" />
+    </label>
+    <label class="field">
+      <span class="label-caps">{{ 'settings.importCsv' | t }}</span>
+      <input class="control" type="file" accept=".csv,text/csv" (change)="onCsvFile($event)" />
+    </label>
+  </section>
+</section>

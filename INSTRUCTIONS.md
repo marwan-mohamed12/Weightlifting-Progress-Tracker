@@ -121,12 +121,13 @@ Frontend talks to the backend through the Angular dev proxy (`/api` → `http://
 │       ├── workout/
 │       ├── stats/
 │       └── shared/
-└── frontend/                ← Angular PWA
-    └── src/app/
-        ├── core/            ← models, API service
-        ├── layout/          ← app shell + bottom nav
-        ├── pages/           ← history, log, exercises, stats
-        └── shared/          ← presentational pieces
+├── frontend/                ← Angular PWA (talks to Spring Boot)
+│   └── src/app/
+│       ├── core/            ← models, HTTP API service
+│       ├── layout/          ← app shell + bottom nav
+│       ├── pages/           ← history, log, exercises, stats
+│       └── shared/          ← presentational pieces
+└── frontend-local/          ← same UI, no backend (browser localStorage)
 ```
 
 Package by **feature** on the backend (`exercise`, `workout`, `stats`), not by technical layer (`controller` / `service` / `repository` at the top level).
@@ -388,6 +389,20 @@ npm start
 
 App: `http://localhost:4200` (proxies `/api` to 8080). Uses `src/environments/environment.ts`.
 
+### No-backend app (`frontend-local/`)
+
+Same screens and flows, with the HTTP API replaced by `localStorage`. Use this when you do not want to run or deploy Spring Boot.
+
+```powershell
+cd frontend-local
+npm install
+npm start
+```
+
+App: `http://localhost:4300`. Data stays in the browser (key `plate.local.v1`). Export/import JSON and CSV still work. First launch seeds a short exercise list.
+
+Android APK from this folder (`npm run apk`) also stores data on the device and does not call the API. Output: `frontend-local/apk/plate-local-debug.apk`.
+
 Frontend production build uses `src/environments/environment.prod.ts`:
 
 ```powershell
@@ -422,7 +437,7 @@ Output: `frontend/apk/plate-debug.apk`. The build stamps the PC’s LAN IP into 
 ### Frontend
 
 - Standalone components, signals for local UI state, reactive forms for input.
-- One API service in `core`. Pages do not call `HttpClient` directly. The API base URL comes from `src/environments/environment.ts` (local) / `environment.prod.ts` (production build).
+- One API service in `core`. Pages do not call `HttpClient` directly. In `frontend/`, the API base URL comes from `src/environments/environment.ts` (local) / `environment.prod.ts` (production build). In `frontend-local/`, `core/api.ts` reads and writes `localStorage` instead of HTTP.
 - Lazy-load page routes. Preload all modules after first paint.
 - Style with **Tailwind utilities** and the shared classes in `frontend/src/styles.css` (`btn`, `card`, `control`, `page-title`). Do not add per-page `.scss` files.
 - SCSS (or component `styles`) is allowed only for things Tailwind cannot express — today that is the bumper-plate face (`plate-face.ts`).

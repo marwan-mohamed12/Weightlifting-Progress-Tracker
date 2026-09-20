@@ -1,0 +1,105 @@
+<section class="page">
+  <header class="mb-5 flex items-start justify-between gap-3">
+    <div>
+      <p class="m-0 text-sm font-medium text-mute">Plate</p>
+      <h1 class="page-title mt-1">{{ 'history.title' | t }}</h1>
+      <p class="mt-1 text-sm text-mute">{{ monthLabel() }}</p>
+    </div>
+    <a routerLink="/settings" class="grid size-12 place-items-center rounded-full bg-raised text-ink" [attr.aria-label]="'nav.settings' | t">
+      <app-icon name="settings" />
+    </a>
+  </header>
+
+  <div class="mb-5 grid grid-cols-7 gap-1">
+    @for (day of week(); track day.iso) {
+      <button
+        type="button"
+        class="grid min-h-[4.25rem] place-items-center rounded-[1.35rem] py-2 transition-colors duration-150"
+        [class.bg-plate]="selectedDay() === day.iso || (!selectedDay() && day.today)"
+        [class.text-on-plate]="selectedDay() === day.iso || (!selectedDay() && day.today)"
+        [class.bg-raised]="selectedDay() !== day.iso && !(!selectedDay() && day.today)"
+        (click)="selectDay(day.iso)"
+      >
+        <span class="text-[11px] font-medium opacity-70">{{ day.day }}</span>
+        <span class="text-base font-bold">{{ day.num }}</span>
+      </button>
+    }
+  </div>
+
+  @if (activeId()) {
+    <a [routerLink]="['/log', activeId()]" class="card mb-5 flex items-center justify-between gap-4 bg-lilac p-5 text-on-plate">
+      <div>
+        <p class="m-0 text-sm font-semibold">{{ 'history.inProgress' | t }}</p>
+        <p class="mt-1 text-sm opacity-80">{{ 'history.inProgressHint' | t }}</p>
+      </div>
+      <app-icon name="chevron" />
+    </a>
+  } @else {
+    <a routerLink="/log" class="card mb-5 flex items-center justify-between gap-4 bg-plate p-5 text-on-plate">
+      <div>
+        <p class="m-0 text-sm font-semibold">{{ 'history.start' | t }}</p>
+        <p class="mt-1 text-sm opacity-80">
+          @if (todayCount() === 0) {
+            {{ 'history.startHint' | t }}
+          } @else if (todayCount() === 1) {
+            {{ 'history.oneToday' | t }}
+          } @else {
+            {{ 'history.moreToday' | t: { count: todayCount() } }}
+          }
+        </p>
+      </div>
+      <span class="grid size-11 shrink-0 place-items-center rounded-full bg-on-plate/10">
+        <app-icon name="log" />
+      </span>
+    </a>
+  }
+
+  @if (error()) {
+    <p class="banner-bad mb-4" role="alert">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <div class="grid gap-3" aria-hidden="true">
+      @for (n of [1, 2, 3]; track n) {
+        <div class="h-24 animate-pulse rounded-[1.75rem] bg-raised"></div>
+      }
+    </div>
+  } @else if (groups().length === 0) {
+    <div class="empty">
+      <h2 class="m-0 text-xl font-semibold">{{ 'history.emptyTitle' | t }}</h2>
+      <p class="m-0 max-w-md text-mute">{{ 'history.emptyBody' | t }}</p>
+      <a routerLink="/log" class="btn mt-2">{{ 'history.start' | t }}</a>
+    </div>
+  } @else {
+    @for (group of groups(); track group.date) {
+      <section class="mb-5">
+        <h2 class="mb-3 text-sm font-semibold text-mute">{{ group.label }}</h2>
+        <ul class="m-0 grid list-none gap-3 p-0">
+          @for (session of group.items; track session.id; let i = $index) {
+            <li>
+              <a
+                [routerLink]="['/log', session.id]"
+                class="flex min-h-[84px] items-center justify-between gap-4 rounded-[1.75rem] p-4 active:scale-[0.99]"
+                [class.bg-lime]="accent(i) === 'lime'"
+                [class.bg-lilac]="accent(i) === 'lilac'"
+                [class.bg-blush]="accent(i) === 'blush'"
+                [class.text-on-plate]="true"
+              >
+                <div class="min-w-0">
+                  <p class="m-0 font-semibold">{{ session.summary }}</p>
+                  <p class="mt-1 truncate text-sm opacity-80">
+                    {{ session.lifts.map(lift => lift.exerciseName).join(' · ') || ('history.noExercises' | t) }}
+                  </p>
+                  @if (session.bodyWeightKg) {
+                    <p class="mt-1 text-sm opacity-80">{{ 'history.bodyWeight' | t: { weight: session.bodyWeightKg } }}</p>
+                  }
+                </div>
+                <app-icon name="chevron" />
+              </a>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  }
+</section>

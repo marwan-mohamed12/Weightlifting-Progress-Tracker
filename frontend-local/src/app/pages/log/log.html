@@ -1,0 +1,258 @@
+<section class="page">
+  <div class="mb-5 flex items-center justify-between gap-4">
+    <div>
+      <p class="m-0 text-sm font-medium text-mute">{{ (status() === 'IN_PROGRESS' ? 'log.live' : 'log.completed') | t }}</p>
+      <h1 class="page-title mt-1">{{ (status() === 'IN_PROGRESS' ? 'log.workout' : 'log.editWorkout') | t }}</h1>
+    </div>
+    @if (sessionId()) {
+      <button type="button" class="btn-danger" (click)="askDelete()">{{ 'common.delete' | t }}</button>
+    }
+  </div>
+
+  @if (error()) {
+    <p class="banner-bad mb-4" role="alert">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <div class="h-64 animate-pulse rounded-[1.75rem] bg-raised" aria-hidden="true"></div>
+  } @else {
+    <form [formGroup]="form" class="grid gap-5">
+      <section class="grid gap-4">
+        <div class="grid gap-4 sm:grid-cols-2">
+          <label class="field">
+            <span class="label-caps">{{ 'log.date' | t }}</span>
+            <input class="control" type="date" formControlName="performedOn" />
+          </label>
+          <label class="field">
+            <span class="label-caps">{{ 'log.bodyWeight' | t }}</span>
+            <input class="control" type="number" formControlName="bodyWeightKg" min="20" max="400" step="0.1" [placeholder]="'common.optional' | t" />
+          </label>
+        </div>
+        <p class="m-0 -mt-2 text-sm text-mute">{{ 'log.bodyWeightHint' | t }}</p>
+        <label class="field">
+          <span class="label-caps">{{ 'log.notes' | t }}</span>
+          <textarea class="control min-h-24 resize-y py-3" formControlName="notes" rows="2" [placeholder]="'log.notesPh' | t"></textarea>
+        </label>
+      </section>
+
+      <div class="flex items-center justify-between">
+        <h2 class="m-0 text-lg font-semibold">{{ 'log.exercises' | t }}</h2>
+        <button type="button" class="btn" (click)="openPicker()">
+          <app-icon name="plus" />
+          {{ 'log.addExercise' | t }}
+        </button>
+      </div>
+
+      @if (lifts.length === 0) {
+        <div class="empty">
+          <h2 class="m-0 text-xl font-semibold">{{ 'log.emptyTitle' | t }}</h2>
+          <p class="m-0 max-w-md text-mute">{{ 'log.emptyBody' | t }}</p>
+        </div>
+      }
+
+      <div formArrayName="lifts" class="grid gap-4">
+        @for (lift of lifts.controls; track $index; let i = $index) {
+          <section class="card" [formGroupName]="i">
+            <div class="mb-3 flex items-center justify-between gap-3">
+              <h3 class="m-0 text-lg font-bold">{{ exerciseName(lift.get('exerciseId')?.value) }}</h3>
+              <button type="button" class="icon-btn" (click)="removeLift(i)" [attr.aria-label]="'log.removeExercise' | t">
+                <app-icon name="trash" />
+              </button>
+            </div>
+            <div formArrayName="sets" class="grid gap-2">
+              @for (set of liftSets(i).controls; track $index; let s = $index) {
+                <div class="flex items-end gap-2 rounded-2xl bg-iron p-2" [formGroupName]="s">
+                  <span class="w-6 pb-3 text-center font-bold text-plate">{{ s + 1 }}</span>
+                  <div class="flex items-end gap-1">
+                    <button type="button" class="btn-ghost min-h-11 min-w-11 px-0" (click)="bumpWeight(i, s, -2.5)">−</button>
+                    <label class="field w-16">
+                      <span class="label-caps">{{ 'common.kg' | t }}</span>
+                      <input class="control px-1 text-center" type="number" formControlName="weightKg" step="0.5" />
+                    </label>
+                    <button type="button" class="btn-ghost min-h-11 min-w-11 px-0" (click)="bumpWeight(i, s, 2.5)">+</button>
+                  </div>
+                  <div class="flex min-w-0 flex-1 items-end gap-1">
+                    <button type="button" class="btn-ghost min-h-11 min-w-11 px-0" (click)="bumpReps(i, s, -1)">−</button>
+                    <label class="field flex-1">
+                      <span class="label-caps">{{ 'log.reps' | t }}</span>
+                      <input class="control px-1 text-center" type="number" formControlName="reps" />
+                    </label>
+                    <button type="button" class="btn-ghost min-h-11 min-w-11 px-0" (click)="bumpReps(i, s, 1)">+</button>
+                  </div>
+                  <button type="button" class="icon-btn" (click)="removeSet(i, s)" [disabled]="liftSets(i).length === 1" [attr.aria-label]="'log.removeSet' | t">
+                    <app-icon name="close" />
+                  </button>
+                </div>
+              }
+            </div>
+            <div class="mt-3 grid grid-cols-2 gap-2">
+              <button type="button" class="btn-ghost w-full" (click)="addSet(i)">{{ 'log.addSet' | t }}</button>
+              <button type="button" class="btn w-full" (click)="logSet(i)">{{ 'log.logSet' | t }}</button>
+            </div>
+          </section>
+        }
+      </div>
+
+      <div class="h-52 lg:h-24"></div>
+    </form>
+  }
+</section>
+
+@if (!loading()) {
+  <div class="pointer-events-none fixed inset-x-0 bottom-[calc(4.6rem+env(safe-area-inset-bottom))] z-30 px-4 lg:bottom-6">
+    <div class="pointer-events-auto mx-auto grid w-full max-w-[720px] gap-2 rounded-[1.5rem] bg-iron/95 p-3 shadow-[0_-8px_32px_rgba(0,0,0,0.35)]">
+      @if (status() === 'IN_PROGRESS') {
+        @if (timer.running()) {
+          <div class="flex items-center justify-between gap-2 rounded-full bg-plate px-4 py-2 text-on-plate">
+            <span class="font-bold tabular-nums">{{ 'log.rest' | t }} {{ restClock(timer.remaining()) }}</span>
+            <span class="flex gap-2">
+              <button type="button" class="min-h-10 rounded-full bg-on-plate/15 px-3 text-sm font-semibold" (click)="timer.add(15)">
+                {{ 'log.add15' | t }}
+              </button>
+              <button type="button" class="min-h-10 rounded-full bg-on-plate/15 px-3 text-sm font-semibold" (click)="timer.skip()">
+                {{ 'log.skipRest' | t }}
+              </button>
+            </span>
+          </div>
+        }
+        <div class="flex flex-wrap gap-2">
+          @for (choice of restChoices; track choice) {
+            <button type="button" class="chip min-h-10" [class.is-on]="restSeconds() === choice" (click)="setRest(choice)">
+              {{ restLabel(choice) }}
+            </button>
+          }
+        </div>
+      }
+      @if (status() === 'IN_PROGRESS') {
+        <button type="button" class="btn w-full" [disabled]="saving()" (click)="finish()">
+          {{ (saving() ? 'log.saving' : 'log.finish') | t }}
+        </button>
+        <div class="grid grid-cols-2 gap-2">
+          <a routerLink="/" class="btn-ghost w-full">{{ 'common.cancel' | t }}</a>
+          <button type="button" class="btn-ghost w-full" [disabled]="saving()" (click)="saveDraft()">{{ 'log.saveDraft' | t }}</button>
+        </div>
+      } @else {
+        <button type="button" class="btn w-full" [disabled]="saving()" (click)="saveDraft()">{{ 'log.saveWorkout' | t }}</button>
+        <a routerLink="/" class="btn-ghost w-full">{{ 'common.cancel' | t }}</a>
+      }
+    </div>
+  </div>
+}
+
+@if (pickerOpen()) {
+    <button type="button" class="fixed inset-0 z-40 bg-black/40" [attr.aria-label]="'common.close' | t" (click)="closePicker()"></button>
+    <div
+      class="fixed inset-x-3 bottom-[calc(5.75rem+env(safe-area-inset-bottom))] z-50 flex max-h-[70dvh] flex-col rounded-[1.75rem] bg-raised p-3"
+    >
+      <input
+        #pickerSearch
+        class="control mb-2 shrink-0"
+        type="search"
+        [placeholder]="'log.searchExercises' | t"
+        [value]="pickerQuery()"
+        (input)="pickerQuery.set($any($event.target).value)"
+      />
+      @if (pickerFilters().length > 1) {
+        <div class="mb-2 flex shrink-0 flex-wrap gap-2">
+          <button
+            type="button"
+            class="chip min-h-11"
+            [class.is-on]="pickerGroup() === 'ALL'"
+            (click)="pickerGroup.set('ALL')"
+          >
+            {{ 'common.all' | t }}
+          </button>
+          @for (group of pickerFilters(); track group) {
+            <button
+              type="button"
+              class="chip min-h-11"
+              [class.is-on]="pickerGroup() === group"
+              (click)="pickerGroup.set(group)"
+            >
+              {{ muscleLabel(group) }}
+            </button>
+          }
+        </div>
+      }
+      <div class="min-h-0 flex-1 overflow-auto">
+        @if (pickerFavorites().length === 0 && pickerSections().length === 0) {
+          <p class="px-2 py-4 text-sm text-mute">{{ 'log.noMatch' | t }}</p>
+        }
+        @if (pickerFavorites().length) {
+          <p class="sticky top-0 z-10 m-0 bg-raised px-2 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-mute">
+            {{ 'log.favorites' | t }}
+          </p>
+          @for (exercise of pickerFavorites(); track exercise.id) {
+            <div class="flex items-center">
+              <button
+                type="button"
+                class="flex min-h-12 min-w-0 flex-1 items-center rounded-2xl px-4 text-start font-medium"
+                (click)="addExercise(exercise.id)"
+              >
+                {{ exercise.name }}
+              </button>
+              <button
+                type="button"
+                class="icon-btn size-11 text-plate"
+                [attr.aria-label]="'log.unpin' | t"
+                (click)="toggleFavorite(exercise.id, $event)"
+              >
+                <app-icon name="star-on" />
+              </button>
+            </div>
+          }
+        }
+        @for (section of pickerSections(); track section.group) {
+          <p class="sticky top-0 z-10 m-0 bg-raised px-2 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-mute">
+            {{ section.label }}
+          </p>
+          @for (exercise of section.items; track exercise.id) {
+            <div class="flex items-center">
+              <button
+                type="button"
+                class="flex min-h-12 min-w-0 flex-1 items-center rounded-2xl px-4 text-start font-medium"
+                (click)="addExercise(exercise.id)"
+              >
+                {{ exercise.name }}
+              </button>
+              <button
+                type="button"
+                class="icon-btn size-11"
+                [class.text-plate]="exercise.favorite"
+                [attr.aria-label]="(exercise.favorite ? 'log.unpin' : 'log.pin') | t"
+                (click)="toggleFavorite(exercise.id, $event)"
+              >
+                <app-icon [name]="exercise.favorite ? 'star-on' : 'star'" />
+              </button>
+            </div>
+          }
+        }
+      </div>
+    </div>
+  }
+
+  @if (records().length) {
+    <button type="button" class="fixed inset-0 z-40 bg-black/50" [attr.aria-label]="'common.close' | t" (click)="dismissRecords()"></button>
+    <div class="fixed inset-x-4 top-1/2 z-50 max-h-[70dvh] -translate-y-1/2 overflow-auto rounded-[1.75rem] bg-plate p-5 text-on-plate">
+      <h2 class="m-0 font-display text-2xl font-bold">{{ 'log.prs' | t }}</h2>
+      <ul class="mt-3 grid list-none gap-2 p-0">
+        @for (hit of records(); track hit.type + hit.exerciseName + hit.detail) {
+          <li class="rounded-2xl bg-on-plate/10 px-4 py-3">
+            <p class="m-0 text-sm font-semibold">{{ hit.exerciseName }}</p>
+            <p class="m-0 font-bold">{{ ('pr.' + hit.type) | t }}</p>
+            <p class="m-0 text-sm opacity-80">{{ hit.detail }}</p>
+          </li>
+        }
+      </ul>
+      <button type="button" class="btn mt-4 w-full bg-on-plate text-plate" (click)="dismissRecords()">{{ 'log.nice' | t }}</button>
+    </div>
+  }
+
+  <app-confirm
+    [open]="confirmOpen()"
+    [title]="'log.deleteTitle' | t"
+    [message]="'log.deleteBody' | t"
+    [confirmLabel]="'log.deleteConfirm' | t"
+    (confirmed)="confirmDelete()"
+    (cancelled)="confirmOpen.set(false)"
+  />

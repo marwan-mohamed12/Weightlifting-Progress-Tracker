@@ -1,0 +1,152 @@
+<section class="page">
+  <header class="mb-5 flex items-start justify-between gap-3">
+    <div class="min-w-0">
+      <p class="m-0 text-sm font-medium text-mute">{{ 'exercises.kicker' | t }}</p>
+      <h1 class="page-title mt-1">{{ 'exercises.title' | t }}</h1>
+    </div>
+    <div class="flex shrink-0 items-center gap-2">
+      <a routerLink="/templates" class="btn-ghost px-3">{{ 'exercises.templates' | t }}</a>
+      <button type="button" class="btn size-12 shrink-0 px-0" (click)="startCreate()" [attr.aria-label]="'exercises.newAria' | t">
+        <app-icon name="plus" />
+      </button>
+    </div>
+  </header>
+
+  @if (error()) {
+    <p class="banner-bad mb-4" role="alert">{{ error() }}</p>
+  }
+
+  <label class="field mb-3">
+    <span class="label-caps">{{ 'exercises.search' | t }}</span>
+    <input
+      class="control"
+      type="search"
+      [value]="query()"
+      (input)="query.set($any($event.target).value)"
+      [placeholder]="'exercises.searchPh' | t"
+    />
+  </label>
+
+  @if (filters().length > 1) {
+    <div class="mb-4 flex flex-wrap gap-2">
+      <button type="button" class="chip min-h-11" [class.is-on]="groupFilter() === 'ALL'" (click)="setGroup('ALL')">
+        {{ 'common.all' | t }}
+      </button>
+      @for (group of filters(); track group) {
+        <button
+          type="button"
+          class="chip min-h-11"
+          [class.is-on]="groupFilter() === group"
+          (click)="setGroup(group)"
+        >
+          {{ muscleLabel(group) }}
+        </button>
+      }
+    </div>
+  }
+
+  @if (showForm()) {
+    <form [formGroup]="form" (ngSubmit)="save()" class="card mb-4 grid gap-3">
+      <h2 class="m-0 text-lg font-semibold">{{ (editingId() ? 'exercises.edit' : 'exercises.create') | t }}</h2>
+      <label class="field">
+        <span class="label-caps">{{ 'exercises.name' | t }}</span>
+        <input class="control" type="text" formControlName="name" maxlength="120" />
+      </label>
+      <label class="field">
+        <span class="label-caps">{{ 'exercises.muscle' | t }}</span>
+        <select class="control" formControlName="muscleGroup">
+          @for (group of groups; track group) {
+            <option [ngValue]="group">{{ muscleLabel(group) }}</option>
+          }
+        </select>
+      </label>
+      <label class="field">
+        <span class="label-caps">{{ 'exercises.notes' | t }}</span>
+        <textarea class="control min-h-24 resize-y py-3" formControlName="notes" rows="3" maxlength="1000" [placeholder]="'exercises.notesPh' | t"></textarea>
+      </label>
+      <div class="flex justify-end gap-2 rtl:flex-row-reverse">
+        <button type="button" class="btn-ghost" (click)="cancel()">{{ 'common.cancel' | t }}</button>
+        <button type="submit" class="btn">{{ 'exercises.save' | t }}</button>
+      </div>
+    </form>
+  }
+
+  @if (loading()) {
+    <div class="grid gap-3" aria-hidden="true">
+      @for (n of [1, 2, 3]; track n) {
+        <div class="h-20 animate-pulse rounded-[1.75rem] bg-raised"></div>
+      }
+    </div>
+  } @else if (exercises().length === 0) {
+    <div class="empty">
+      <h2 class="m-0 text-xl font-semibold">{{ 'exercises.emptyTitle' | t }}</h2>
+      <p class="m-0 max-w-md text-mute">{{ 'exercises.emptyBody' | t }}</p>
+      <button type="button" class="btn mt-2" (click)="startCreate()">{{ 'exercises.createCta' | t }}</button>
+    </div>
+  } @else if (matchCount() === 0) {
+    <div class="empty">
+      <h2 class="m-0 text-xl font-semibold">{{ 'exercises.noMatch' | t }}</h2>
+      <p class="m-0 max-w-md text-mute">{{ 'exercises.noMatchBody' | t }}</p>
+      <button type="button" class="btn-ghost mt-2" (click)="query.set(''); setGroup('ALL')">{{ 'exercises.clearFilters' | t }}</button>
+    </div>
+  } @else {
+    @for (section of sections(); track section.group) {
+      <section class="mb-5">
+        <h2 class="sticky top-0 z-10 mb-2 flex items-center gap-2 bg-iron py-2 text-sm font-semibold text-mute">
+          <span class="muscle-chip m-0" [ngClass]="muscleChip(section.group)">{{ section.label }}</span>
+          <span>{{ section.items.length }}</span>
+        </h2>
+        <ul class="m-0 grid list-none gap-3 p-0">
+          @for (exercise of section.items; track exercise.id) {
+            <li
+              class="grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-1 rounded-[1.75rem] bg-surface py-1.5 ps-4 pe-1"
+            >
+              <div class="min-w-0">
+                <a [routerLink]="['/stats/exercise']" class="m-0 font-semibold text-ink">{{ exercise.name }}</a>
+                @if (exercise.notes) {
+                  <p class="mt-1 truncate text-sm text-mute">{{ exercise.notes }}</p>
+                }
+              </div>
+              <div class="flex shrink-0 items-center">
+                <button
+                  type="button"
+                  class="icon-btn size-11"
+                  [class.text-plate]="exercise.favorite"
+                  [attr.aria-label]="(exercise.favorite ? 'log.unpin' : 'log.pin') | t"
+                  (click)="toggleFavorite(exercise)"
+                >
+                  <app-icon [name]="exercise.favorite ? 'star-on' : 'star'" />
+                </button>
+                <button
+                  type="button"
+                  class="icon-btn size-11"
+                  [attr.aria-label]="('common.edit' | t) + ' ' + exercise.name"
+                  (click)="startEdit(exercise)"
+                >
+                  <app-icon name="edit" />
+                </button>
+                <button
+                  type="button"
+                  class="icon-btn size-11 text-bad"
+                  [attr.aria-label]="('common.delete' | t) + ' ' + exercise.name"
+                  (click)="askDelete(exercise)"
+                >
+                  <app-icon name="trash" />
+                </button>
+              </div>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  }
+
+  <app-confirm
+    [open]="pendingDelete() !== null"
+    [title]="'exercises.deleteTitle' | t"
+    [message]="pendingDelete() ? ('exercises.deleteBody' | t: { name: pendingDelete()!.name }) : ''"
+    [confirmLabel]="'exercises.deleteConfirm' | t"
+    (confirmed)="confirmDelete()"
+    (cancelled)="cancelDelete()"
+  />
+</section>
